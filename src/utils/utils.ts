@@ -10,6 +10,10 @@ export function isEmpty(value: any): boolean {
     return value === null || value === undefined;
 }
 
+export function formatNumber(x: number, sep = ' ') {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+}
+
 export type SelectorCollection<T> = string | NodeListOf<Element> | T[];
 
 export function ensureAllElements<T extends HTMLElement>(selectorElement: SelectorCollection<T>, context: HTMLElement = document as unknown as HTMLElement): T[] {
@@ -133,3 +137,15 @@ export function createElement<
     }
     return element;
 }
+
+export function handlePrice(price: number): string {
+    const priceStr = price.toString();
+    return priceStr.length < 5
+      ? priceStr
+      : priceStr
+        .split('')
+        .reverse()
+        .map((s, i) => ((i + 1) % 3 === 0 ? ' ' + s : s))
+        .reverse()
+        .join('');
+  }

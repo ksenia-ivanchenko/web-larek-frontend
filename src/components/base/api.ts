@@ -1,9 +1,4 @@
-export type ApiListResponse<Type> = {
-    total: number,
-    items: Type[]
-};
-
-export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
+import { ApiPostMethods } from "../../types/base/Api";
 
 export class Api {
     readonly baseUrl: string;

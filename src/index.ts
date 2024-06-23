@@ -1,6 +1,5 @@
 import './scss/styles.scss';
 
-import { Api } from './components/base/Api';
 import { EventEmitter } from './components/base/EventEmitter';
 import { Catalog } from './components/model/Catalog';
 import { Page } from './components/view/Page';
@@ -17,6 +16,7 @@ import { DeliveryDetails } from './components/view/DeliveryDetails';
 import { Order } from './components/model/Order';
 import { Contacts } from './components/view/Contacts';
 import { Success } from './components/view/Success';
+import { Api } from './components/base/Api';
 
 const api = new Api(API_URL);
 const events = new EventEmitter();

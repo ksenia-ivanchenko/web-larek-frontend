@@ -4,7 +4,7 @@ import { Component } from '../base/Component';
 
 interface IFormState {
 	valid: boolean;
-	errors: string[];
+	errors: {};
 }
 
 export class Form<T> extends Component<IFormState> {
@@ -50,7 +50,7 @@ export class Form<T> extends Component<IFormState> {
 
 	render(state: Partial<T> & IFormState) {
 		const { valid, errors, ...inputs } = state;
-		super.render({ valid, errors });
+		super.render({ valid });
 		Object.assign(this, inputs);
 		return this.container;
 	}

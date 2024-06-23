@@ -1,10 +1,10 @@
-import { IOrder, IProduct, PaymentMethods } from '../../types';
+import { IOrder, PaymentMethods } from '../../types';
 import { Model } from '../base/Model';
 
 export class Order extends Model<IOrder> {
-	products: IProduct[] = [];
+	items: string[] = [];
 	total: number | null = null;
-	payment: PaymentMethods;
+	payment: PaymentMethods = undefined;
 	address: string = '';
 	email: string = '';
 	phone: string = '';
@@ -12,14 +12,16 @@ export class Order extends Model<IOrder> {
 	errors: Partial<Record<keyof IOrder, string>>;
 
 	validateContacts() {
-		const regExp = /(^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$)/;
+		const regExpPhone = /(^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$)/;
+		const regExpEmail =
+			/^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@(([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{2,})$/iu;
 
 		const errors: typeof this.errors = {};
-		if (!this.email) {
-			errors.email = 'укажите email';
+		if (!this.email || !regExpEmail.test(this.email)) {
+			errors.email = 'укажите корректный email';
 		}
 
-		if (!this.phone || !regExp.test(this.phone)) {
+		if (!this.phone || !regExpPhone.test(this.phone)) {
 			errors.phone = 'введите корректный номер';
 		}
 		this.errors = errors;
@@ -38,5 +40,16 @@ export class Order extends Model<IOrder> {
 		this.errors = errors;
 		this.events.emit('deliveryDetailsErrors:change', this.errors);
 		return Object.keys(errors).length === 0;
+	}
+
+	removeOrderData() {
+		this.items = [];
+		this.total = null;
+		this.payment = undefined;
+		this.address = '';
+		this.email = '';
+		this.phone = '';
+		this.valid = false;
+		this.errors = {};
 	}
 }

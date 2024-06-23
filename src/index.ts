@@ -15,6 +15,8 @@ import { BasketModel } from './components/model/BasketModel';
 import { Basket } from './components/view/Basket';
 import { DeliveryDetails } from './components/view/DeliveryDetails';
 import { Order } from './components/model/Order';
+import { Contacts } from './components/view/Contacts';
+import { Success } from './components/view/Success';
 
 const api = new Api(API_URL);
 const events = new EventEmitter();
@@ -26,21 +28,24 @@ const productPreviewTemplate =
 const basketTemplate = ensureElement<HTMLTemplateElement>('#basket');
 const basketItemTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
 const modalTemplate = ensureElement<HTMLElement>('#modal-container');
-const orderTemplate = ensureElement<HTMLTemplateElement>('#order');
+const deliveryDetailsTemplate = ensureElement<HTMLTemplateElement>('#order');
+const contactsTemplate = ensureElement<HTMLTemplateElement>('#contacts');
+const successTemplate = ensureElement<HTMLTemplateElement>('#success');
 
 // модели данных
 const catalog = new Catalog([], events);
 const basketModel = new BasketModel({}, events);
 const order = new Order({}, events);
 
-// дом элементы
+// отоюражения
 const page = new Page(document.body, events);
 const modal = new Modal(modalTemplate, events);
 const basket = new Basket('basket', cloneTemplate(basketTemplate), events);
 const deliveryDetails = new DeliveryDetails(
-	cloneTemplate(orderTemplate),
+	cloneTemplate(deliveryDetailsTemplate),
 	events
 );
+const contacts = new Contacts(cloneTemplate(contactsTemplate), events);
 
 // получаем товары и сохраняем в модель каталога
 api
@@ -130,24 +135,20 @@ events.on('basket:open', () => {
 events.on('basket:delete', (itemToDelete: Product) => {
 	//удаляем сначала из модели
 	basketModel.removeFromBasket(itemToDelete);
+	//переопределяем сумму корзины и счетчик на странице
 	basket.total = basketModel.total;
 	page.counter = basketModel.products.length;
-	//переопределяем сумму корзины и счетчик на странице
-	getBasketItemsView();
 	//перерисовываем список товаров
+	getBasketItemsView();
 });
 
-// оформить заказ
+// перейти к оформлению заказа
 events.on('basket:order', () => {
-	order.products = basketModel.products;
-	order.total = basketModel.total;
 	//сохраняем в модель заказа актуальные товары и сумму из модели корзины
+	order.items = basketModel.products.map((item) => item.id);
+	order.total = basketModel.total;
 	modal.render({
-		content: deliveryDetails.render({
-			address: '',
-			valid: false,
-			errors: [],
-		}), //рендерим модалку с формой заполнения деталей доставки
+		content: deliveryDetails.render(order), //рендерим модалку с формой заполнения деталей доставки
 	});
 });
 
@@ -155,6 +156,7 @@ events.on('basket:order', () => {
 events.on(
 	'payment:change',
 	(data: { field: keyof IOrder; value: PaymentMethods }) => {
+		//сохраняем в модель заказа тип оплаты
 		order.payment = data.value;
 		order.validateDeliveryDetails();
 	}
@@ -162,6 +164,7 @@ events.on(
 
 // меняются данные об адресе
 events.on('address:change', (data: { field: keyof IOrder; value: string }) => {
+	//сохраняем в модель заказа адрес
 	order.address = data.value;
 	order.validateDeliveryDetails();
 });
@@ -172,5 +175,67 @@ events.on('deliveryDetailsErrors:change', (errors: Partial<IOrder>) => {
 	const errorString = Object.values(errors).join(' и ');
 	deliveryDetails.errors =
 		errorString.charAt(0).toUpperCase() + errorString.slice(1); //делаем ошибки валидации красивыми
-	console.log(typeof Object.values(errors).join(' и '));
+});
+
+// перейти к заполнению контактов
+events.on('order:submit', () => {
+	modal.render({
+		content: contacts.render(order),
+	});
+});
+
+//меняются данные о почте
+events.on(
+	'email:change',
+	(data: { field: keyof IOrder; value: PaymentMethods }) => {
+		//сохраняем в модель заказа тип оплаты
+		order.email = data.value;
+		order.validateContacts();
+	}
+);
+
+// меняются данные о телефоне
+events.on('phone:change', (data: { field: keyof IOrder; value: string }) => {
+	//сохраняем в модель заказа адрес
+	order.phone = data.value;
+	order.validateContacts();
+});
+
+// изменилось состояние валидации данных с контактами
+events.on('contactsErrors:change', (errors: Partial<IOrder>) => {
+	contacts.valid = !Object.keys(errors).length; //проверяем, есть ли что нибудь в объекте ошибок
+	console.log(!Object.keys(errors).length);
+	const errorString = Object.values(errors).join(' и ');
+	contacts.errors = errorString.charAt(0).toUpperCase() + errorString.slice(1); //делаем ошибки валидации красивыми
+});
+
+// отправить на сервер данные и показать окно успешной покупки
+events.on('contacts:submit', () => {
+	api
+		.post('/order', order)
+		.then((res) => {
+			const success = new Success(
+				'order-success',
+				cloneTemplate(successTemplate),
+				{
+					onClick: () => events.emit('success:close'),
+				}
+			);
+			modal.render({
+				content: success.render({
+					total: order.total,
+				}),
+			});
+			order.removeOrderData();
+			basketModel.clearBasket();
+			catalog.products.map((item) => (item.inBasket = false));
+			page.counter = 0;
+		})
+		.catch((err) => {
+			console.log(err);
+		});
+});
+
+events.on('success:close', () => {
+	modal.close();
 });

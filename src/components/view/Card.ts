@@ -2,7 +2,6 @@ import { CategoryType, IProduct } from '../../types';
 import { CDN_URL, categorySelectors } from '../../utils/constants';
 import { ensureElement, handlePrice } from '../../utils/utils';
 import { Component } from '../base/Component';
-import { Product } from '../model/Product';
 
 interface ICardActions {
 	onClick: (event: MouseEvent) => void;

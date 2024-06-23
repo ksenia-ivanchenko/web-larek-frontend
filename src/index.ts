@@ -7,7 +7,6 @@ import { IOrder, IProduct, PaymentMethods } from './types';
 import { API_URL } from './utils/constants';
 import { cloneTemplate, ensureElement } from './utils/utils';
 import { Card } from './components/view/Card';
-import { Product } from './components/model/Product';
 import { ApiResponse } from './types/base/Api';
 import { Modal } from './components/view/Modal';
 import { BasketModel } from './components/model/BasketModel';
@@ -72,7 +71,7 @@ events.on('items:changed', () => {
 });
 
 // открыть карточку
-events.on('catalog:selectCard', (item: Product) => {
+events.on('catalog:selectCard', (item: IProduct) => {
 	//для того товара, на который нажали, создаем карточку
 	const productPreview = new Card(
 		'card',
@@ -102,18 +101,19 @@ events.on('modal:close', () => {
 });
 
 // добавить/удалить из корзины (из карточки товара)
-events.on('modal:toBasket', (item: Product) => {
+events.on('modal:toBasket', (item: IProduct) => {
 	//если в модели корзины уже содержится товар, то удаляем; в обратном случае - добавляем
 	basketModel.products.some((product) => product.id === item.id)
 		? basketModel.removeFromBasket(item)
 		: basketModel.addToBasket(item);
 	//и меняем счетчик товаров в корзине
 	page.counter = basketModel.products.length;
+	getBasketItemsView();
 });
 
 // получить актуальные отображения товаров, добавленных в корзину
 function getBasketItemsView() {
-	//берем товары из модели корзины, инстанцируем для них карточки, рендерим и сохраняем в товары вьюшки корзины
+	// берем товары из модели корзины, инстанцируем для них карточки, рендерим и сохраняем в товары вьюшки корзины
 	basket.items = basketModel.products.map((item, index) => {
 		const basketItem = new Card('card', cloneTemplate(basketItemTemplate), {
 			onClick: () => {
@@ -128,14 +128,14 @@ function getBasketItemsView() {
 // открыть корзину
 events.on('basket:open', () => {
 	//рендерим модалку с актуальными товарами корзины
-	getBasketItemsView();
+	console.log(basket.items);
 	modal.render({
 		content: basket.render(basketModel),
 	});
 });
 
 // удалить из корзины (находясь в корзине)
-events.on('basket:delete', (itemToDelete: Product) => {
+events.on('basket:delete', (itemToDelete: IProduct) => {
 	//удаляем сначала из модели
 	basketModel.removeFromBasket(itemToDelete);
 	//переопределяем сумму корзины и счетчик на странице
@@ -217,13 +217,6 @@ events.on('contacts:submit', () => {
 	api
 		.post('/order', order)
 		.then((res) => {
-			// const success = new Success(
-			// 	'order-success',
-			// 	cloneTemplate(successTemplate),
-			// 	{
-			// 		onClick: () => events.emit('success:close'),
-			// 	}
-			// );
 			modal.render({
 				content: success.render({
 					total: order.total,

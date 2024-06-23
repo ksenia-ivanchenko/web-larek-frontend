@@ -1,12 +1,10 @@
 import { IProduct } from '../../types';
 import { Model } from '../base/Model';
-import { Product } from './Product';
-
 export class Catalog extends Model<IProduct[]> {
-	products: Product[];
+	products: IProduct[] = [];
 
 	setProducts(items: IProduct[]) {
-		this.products = items.map((item) => new Product(item, this.events));
+		items.map((item) => this.products.push(item));
 		this.emitChanges('items:changed', { products: this.products });
 	}
 }

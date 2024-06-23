@@ -46,6 +46,9 @@ const deliveryDetails = new DeliveryDetails(
 	events
 );
 const contacts = new Contacts(cloneTemplate(contactsTemplate), events);
+const success = new Success('order-success', cloneTemplate(successTemplate), {
+	onClick: () => events.emit('success:close'),
+});
 
 // получаем товары и сохраняем в модель каталога
 api
@@ -214,13 +217,13 @@ events.on('contacts:submit', () => {
 	api
 		.post('/order', order)
 		.then((res) => {
-			const success = new Success(
-				'order-success',
-				cloneTemplate(successTemplate),
-				{
-					onClick: () => events.emit('success:close'),
-				}
-			);
+			// const success = new Success(
+			// 	'order-success',
+			// 	cloneTemplate(successTemplate),
+			// 	{
+			// 		onClick: () => events.emit('success:close'),
+			// 	}
+			// );
 			modal.render({
 				content: success.render({
 					total: order.total,

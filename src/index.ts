@@ -224,8 +224,9 @@ events.on('contacts:submit', () => {
 			});
 			order.removeOrderData();
 			basketModel.clearBasket();
+			basket.items = [];
 			catalog.products.map((item) => (item.inBasket = false));
-			page.counter = 0;
+			page.counter = basketModel.products.length;
 		})
 		.catch((err) => {
 			console.log(err);

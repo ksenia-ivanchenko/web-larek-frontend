@@ -150,6 +150,10 @@ events.on('basket:order', () => {
 	//сохраняем в модель заказа актуальные товары и сумму из модели корзины
 	order.items = basketModel.products.map((item) => item.id);
 	order.total = basketModel.total;
+	// чтобы сабмит был рвзблокирован, когда форма заполнена, закрыта и после повторно заходим в нее
+	if (order.validateDeliveryDetails()) {
+		order.valid = true;
+	}
 	modal.render({
 		content: deliveryDetails.render(order), //рендерим модалку с формой заполнения деталей доставки
 	});
@@ -182,6 +186,10 @@ events.on('deliveryDetailsErrors:change', (errors: Partial<IOrder>) => {
 
 // перейти к заполнению контактов
 events.on('order:submit', () => {
+	// чтобы сабмит был рвзблокирован, когда форма заполнена, закрыта и после повторно заходим в нее
+	if (order.validateContacts()) {
+		order.valid = true;
+	}
 	modal.render({
 		content: contacts.render(order),
 	});
